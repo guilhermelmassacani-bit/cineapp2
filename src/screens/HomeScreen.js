@@ -7,28 +7,30 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { fetchMovies } from '../api';
+import { buscarFilmes } from '../api';
 
 export default function HomeScreen({ navigation }) {
-  const [movies, setMovies] = useState([]);
+  const [filmes, setFilmes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMovies()
-      .then((data) => {
-        setMovies(data);
+    async function carregarFilmes() {
+      try {
+        const dados = await buscarFilmes();
+        setFilmes(dados);
+      } catch (error) {
+        console.error('Erro ao buscar filmes:', error);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+      }
+    }
+    carregarFilmes();
   }, []);
 
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#0056b3" />
+        <ActivityIndicator size="large" color="#38bdf8" />
         <Text style={styles.loadingText}>Carregando catálogo...</Text>
       </View>
     );
@@ -39,24 +41,25 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity
         style={styles.favoritesButton}
         onPress={() => navigation.navigate('FavoritesScreen')}
+        activeOpacity={0.8}
       >
-        <Text style={styles.favoritesButtonText}>⭐ Ver Meus Favoritos</Text>
+        <Text style={styles.favoritesButtonText}>VER MEUS FAVORITOS ⭐</Text>
       </TouchableOpacity>
 
       <FlatList
-        data={movies}
+        data={filmes}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('DetailsScreen', { movie: item })}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('DetailsScreen', { filme: item })}
           >
             <Text style={styles.cardTitle}>{item.titulo}</Text>
-            <Text style={styles.cardSubtitle}>
-              {item.genero} • {item.ano}
-            </Text>
-            <Text style={styles.cardDetail}>Direção: {item.diretor}</Text>
+            <Text style={styles.cardYear}>({item.ano})</Text>
+            <Text style={styles.cardSubtitle}>Gênero: {item.genero}</Text>
+            <Text style={styles.cardDetail}>Direção: {item.diretor} • {item.duracao}</Text>
           </TouchableOpacity>
         )}
       />
@@ -67,66 +70,82 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#eef4fb', // Azul muito suave para o fundo
+    padding: 20,
+    backgroundColor: '#0f172a',
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
-    backgroundColor: '#eef4fb',
+    backgroundColor: '#0f172a',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 18,
-    color: '#003366',
-    fontWeight: '500',
+    color: '#94a3b8',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   favoritesButton: {
-    backgroundColor: '#0056b3', // Azul escuro vibrante
-    paddingVertical: 14,
+    backgroundColor: '#0284c7',
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: 14,
+    marginBottom: 24,
     alignItems: 'center',
-    elevation: 3, // Sombra para Android
-    shadowColor: '#000', // Sombra para Web/iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    justify: 'center',
+    shadowColor: '#0284c7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
   },
   favoritesButtonText: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textAlign: 'center',
   },
   card: {
-    backgroundColor: '#ffffff',
-    padding: 18,
-    borderRadius: 14,
-    marginBottom: 14,
-    borderLeftWidth: 5,
-    borderLeftColor: '#007bff', // Destaque em azul no lado esquerdo
-    elevation: 2,
-    shadowColor: '#003366',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: '#1e293b',
+    padding: 22,
+    borderRadius: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 4,
   },
   cardTitle: {
-    fontSize: 22, // Título maior
-    fontWeight: 'bold',
-    color: '#002244', // Azul escuro para leitura
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#f8fafc',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  cardYear: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   cardSubtitle: {
     fontSize: 16,
-    color: '#0056b3',
-    marginTop: 4,
+    color: '#38bdf8',
     fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 2,
   },
   cardDetail: {
     fontSize: 14,
-    color: '#4a6572',
-    marginTop: 4,
+    color: '#94a3b8',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

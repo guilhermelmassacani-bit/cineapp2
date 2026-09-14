@@ -1,130 +1,124 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function DetailsScreen({ route }) {
-  const { movie } = route.params;
+export default function DetailsScreen({ route, navigation }) {
+  const { filme } = route.params;
 
-  const saveFavorite = async () => {
+  const salvarFavorito = async () => {
     try {
-      const existingFavorites = await AsyncStorage.getItem('@cineapp_favorites');
-      let favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
+      const favoritosSalvos = await AsyncStorage.getItem('@cinefatec_favoritos');
+      let favoritos = favoritosSalvos ? JSON.parse(favoritosSalvos) : [];
 
-      const isAlreadyFavorite = favorites.some((item) => item.id === movie.id);
+      const jaExiste = favoritos.some((f) => f.id === filme.id);
 
-      if (isAlreadyFavorite) {
+      if (jaExiste) {
         Alert.alert('Aviso', 'Este filme já está na sua lista de favoritos!');
         return;
       }
 
-      favorites.push(movie);
-      await AsyncStorage.setItem('@cineapp_favorites', JSON.stringify(favorites));
-      Alert.alert('Sucesso', 'Filme adicionado aos favoritos!');
+      favoritos.push(filme);
+      await AsyncStorage.setItem('@cinefatec_favoritos', JSON.stringify(favoritos));
+
+      Alert.alert('Sucesso', 'Filme adicionado aos favoritos!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (error) {
-      console.error(error);
       Alert.alert('Erro', 'Não foi possível salvar o filme.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.detailsCard}>
-        <Text style={styles.title}>{movie.titulo}</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Gênero:</Text>
-          <Text style={styles.value}>{movie.genero}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Ano:</Text>
-          <Text style={styles.value}>{movie.ano}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Diretor:</Text>
-          <Text style={styles.value}>{movie.diretor}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Duração:</Text>
-          <Text style={styles.value}>{movie.duracao}</Text>
-        </View>
-
-        <Text style={styles.synopsisTitle}>Sinopse:</Text>
-        <Text style={styles.synopsis}>{movie.sinopse}</Text>
+      <Text style={styles.title}>{filme.titulo}</Text>
+      
+      <View style={styles.infoCard}>
+        <Text style={styles.info}>📅 <Text style={styles.infoBold}>Ano:</Text> {filme.ano}</Text>
+        <Text style={styles.info}>🎬 <Text style={styles.infoBold}>Gênero:</Text> {filme.genero}</Text>
+        <Text style={styles.info}>🎥 <Text style={styles.infoBold}>Diretor:</Text> {filme.diretor}</Text>
+        <Text style={styles.info}>⏱️ <Text style={styles.infoBold}>Duração:</Text> {filme.duracao}</Text>
       </View>
 
-      <TouchableOpacity style={styles.customButton} onPress={saveFavorite}>
-        <Text style={styles.customButtonText}>💙 Adicionar aos Favoritos</Text>
+      <Text style={styles.sectionHeader}>Sinopse</Text>
+      <Text style={styles.sinopse}>{filme.sinopse}</Text>
+
+      <TouchableOpacity 
+        style={styles.customButton} 
+        onPress={salvarFavorito}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.customButtonText}>Salvar nos Favoritos 🤍</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#eef4fb',
+  container: { 
+    flex: 1, 
+    padding: 20, 
+    backgroundColor: '#0f172a',
+    justifyContent: 'center', 
+    alignItems: 'center',   
   },
-  detailsCard: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 16,
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    marginBottom: 20, 
+    color: '#f8fafc',
+    textAlign: 'center',
+  },
+  infoCard: {
+    backgroundColor: '#1e293b',
+    padding: 18,
+    borderRadius: 12,
     marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#003366',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: '#334155',
+    width: '100%',
+    alignItems: 'center', 
   },
-  title: {
-    fontSize: 26, // Título principal maior
-    fontWeight: 'bold',
-    color: '#002244',
-    marginBottom: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: '#d0e1f9',
-    paddingBottom: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
+  info: { 
+    fontSize: 18, 
+    color: '#cbd5e1', 
     marginBottom: 8,
+    textAlign: 'center',
   },
-  label: {
-    fontSize: 16,
+  infoBold: {
     fontWeight: 'bold',
-    color: '#0056b3',
-    width: 80,
+    color: '#38bdf8',
   },
-  value: {
-    fontSize: 16,
-    color: '#1a365d',
-    flex: 1,
+  sectionHeader: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    marginTop: 8, 
+    marginBottom: 8,
+    color: '#f8fafc',
+    textAlign: 'center',
   },
-  synopsisTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#002244',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  synopsis: {
-    fontSize: 15,
-    color: '#4a6572',
-    lineHeight: 22,
+  sinopse: { 
+    fontSize: 18, 
+    color: '#94a3b8', 
+    lineHeight: 26, 
+    marginBottom: 30,
+    textAlign: 'center',
   },
   customButton: {
-    backgroundColor: '#0056b3',
+    backgroundColor: '#2563eb', 
     paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    elevation: 3,
+    width: '100%',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  customButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  customButtonText: { 
+    color: '#ffffff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
   },
 });

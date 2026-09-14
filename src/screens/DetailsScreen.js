@@ -1,64 +1,130 @@
-// src/screens/DetailsScreen.js
-
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function DetailsScreen({ route, navigation }) {
-  const { filme } = route.params;
+export default function DetailsScreen({ route }) {
+  const { movie } = route.params;
 
-  const salvarFavorito = async () => {
+  const saveFavorite = async () => {
     try {
-      const favoritosSalvos = await AsyncStorage.getItem('@cinefatec_favoritos');
-      let favoritos = favoritosSalvos ? JSON.parse(favoritosSalvos) : [];
+      const existingFavorites = await AsyncStorage.getItem('@cineapp_favorites');
+      let favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
 
-      const jaExiste = favoritos.some((f) => f.id === filme.id);
+      const isAlreadyFavorite = favorites.some((item) => item.id === movie.id);
 
-      if (jaExiste) {
+      if (isAlreadyFavorite) {
         Alert.alert('Aviso', 'Este filme já está na sua lista de favoritos!');
         return;
       }
 
-      favoritos.push(filme);
-      await AsyncStorage.setItem('@cinefatec_favoritos', JSON.stringify(favoritos));
-
-      Alert.alert('Sucesso', 'Filme adicionado aos favoritos!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      favorites.push(movie);
+      await AsyncStorage.setItem('@cineapp_favorites', JSON.stringify(favorites));
+      Alert.alert('Sucesso', 'Filme adicionado aos favoritos!');
     } catch (error) {
+      console.error(error);
       Alert.alert('Erro', 'Não foi possível salvar o filme.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{filme.titulo}</Text>
-      <Text style={styles.info}>Ano: {filme.ano}</Text>
-      <Text style={styles.info}>Gênero: {filme.genero}</Text>
-      <Text style={styles.info}>Diretor: {filme.diretor}</Text>
-      <Text style={styles.info}>Duração: {filme.duracao}</Text>
+      <View style={styles.detailsCard}>
+        <Text style={styles.title}>{movie.titulo}</Text>
 
-      <Text style={styles.sectionHeader}>Sinopse:</Text>
-      <Text style={styles.sinopse}>{filme.sinopse}</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Gênero:</Text>
+          <Text style={styles.value}>{movie.genero}</Text>
+        </View>
 
-      <TouchableOpacity style={styles.customButton} onPress={salvarFavorito}>
-        <Text style={styles.customButtonText}>Salvar nos Favoritos ❤️</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Ano:</Text>
+          <Text style={styles.value}>{movie.ano}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Diretor:</Text>
+          <Text style={styles.value}>{movie.diretor}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Duração:</Text>
+          <Text style={styles.value}>{movie.duracao}</Text>
+        </View>
+
+        <Text style={styles.synopsisTitle}>Sinopse:</Text>
+        <Text style={styles.synopsis}>{movie.sinopse}</Text>
+      </View>
+
+      <TouchableOpacity style={styles.customButton} onPress={saveFavorite}>
+        <Text style={styles.customButtonText}>💙 Adicionar aos Favoritos</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: '#111' },
-  info: { fontSize: 16, color: '#444', marginBottom: 4 },
-  sectionHeader: { fontSize: 18, fontWeight: 'bold', marginTop: 16, marginBottom: 6 },
-  sinopse: { fontSize: 15, color: '#666', lineHeight: 22, marginBottom: 24 },
-  customButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#eef4fb',
   },
-  customButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  detailsCard: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#003366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+  },
+  title: {
+    fontSize: 26, // Título principal maior
+    fontWeight: 'bold',
+    color: '#002244',
+    marginBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#d0e1f9',
+    paddingBottom: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0056b3',
+    width: 80,
+  },
+  value: {
+    fontSize: 16,
+    color: '#1a365d',
+    flex: 1,
+  },
+  synopsisTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#002244',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  synopsis: {
+    fontSize: 15,
+    color: '#4a6572',
+    lineHeight: 22,
+  },
+  customButton: {
+    backgroundColor: '#0056b3',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 3,
+  },
+  customButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });

@@ -1,75 +1,76 @@
-// src/screens/FavoritesScreen.js
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function FavoritesScreen() {
-  const [favoritos, setFavoritos] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
-  const carregarFavoritos = async () => {
+  const loadFavorites = async () => {
     try {
-      const dados = await AsyncStorage.getItem('@cinefatec_favoritos');
-      if (dados) {
-        setFavoritos(JSON.parse(dados));
+      const storedFavorites = await AsyncStorage.getItem('@cineapp_favorites');
+      if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
       } else {
-        setFavoritos([]);
+        setFavorites([]);
       }
     } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
+      console.error(error);
     }
   };
 
-  useEffect(() => {
-    carregarFavoritos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [])
+  );
 
-  const limparFavoritos = async () => {
+  const clearFavorites = async () => {
     try {
-      await AsyncStorage.removeItem('@cinefatec_favoritos');
-      setFavoritos([]);
-      Alert.alert('Sucesso', 'Todos os favoritos foram removidos.');
+      await AsyncStorage.removeItem('@cineapp_favorites');
+      setFavorites([]);
+      Alert.alert('Sucesso', 'Lista de favoritos limpa!');
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível limpar os favoritos.');
+      console.error(error);
     }
   };
 
-  const removerFavoritoIndividual = async (id) => {
+  const removeIndividualFavorite = async (id) => {
     try {
-      const novaLista = favoritos.filter((item) => item.id !== id);
-      await AsyncStorage.setItem('@cinefatec_favoritos', JSON.stringify(novaLista));
-      setFavoritos(novaLista);
+      const updatedFavorites = favorites.filter((item) => item.id !== id);
+      await AsyncStorage.setItem('@cineapp_favorites', JSON.stringify(updatedFavorites));
+      setFavorites(updatedFavorites);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível remover o item.');
+      console.error(error);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.counterText}>
-        {favoritos.length > 0
-          ? `Total: ${favoritos.length} filme(s) salvo(s)`
+        {favorites.length > 0
+          ? `Total: ${favorites.length} filme(s) salvo(s)`
           : 'Sua lista de favoritos está vazia 🎬'}
       </Text>
 
-      {favoritos.length > 0 && (
-        <TouchableOpacity style={styles.clearButton} onPress={limparFavoritos}>
-          <Text style={styles.clearButtonText}>Limpar Todos os Favoritos 🗑️</Text>
+      {favorites.length > 0 && (
+        <TouchableOpacity style={styles.clearButton} onPress={clearFavorites}>
+          <Text style={styles.clearButtonText}>🗑️ Limpar Todos</Text>
         </TouchableOpacity>
       )}
 
       <FlatList
-        data={favoritos}
+        data={favorites}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <View style={styles.infoContainer}>
+            <View style={styles.cardInfo}>
               <Text style={styles.cardTitle}>{item.titulo}</Text>
               <Text style={styles.cardSubtitle}>{item.genero} • {item.ano}</Text>
             </View>
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => removerFavoritoIndividual(item.id)}
+              onPress={() => removeIndividualFavorite(item.id)}
             >
               <Text style={styles.removeButtonText}>Remover</Text>
             </TouchableOpacity>
@@ -81,34 +82,69 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
-  counterText: { fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#333' },
-  clearButton: {
-    backgroundColor: '#FF3B30',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#eef4fb',
   },
-  clearButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  counterText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#002244',
+    textAlign: 'center',
+    marginVertical: 12,
+  },
+  clearButton: {
+    backgroundColor: '#d9534f', // Vermelho/suave para acao destrutiva
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   card: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 1,
+    borderLeftWidth: 5,
+    borderLeftColor: '#0056b3',
+    elevation: 2,
+    shadowColor: '#003366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  infoContainer: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  cardSubtitle: { fontSize: 13, color: '#666', marginTop: 2 },
+  cardInfo: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 20, // Título maior
+    fontWeight: 'bold',
+    color: '#002244',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#0056b3',
+    marginTop: 2,
+  },
   removeButton: {
-    backgroundColor: '#FF9500',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    backgroundColor: '#4a90e2', // Azul intermediario para acao secundaria
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginLeft: 10,
   },
-  removeButtonText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  removeButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
